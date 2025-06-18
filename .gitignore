@@ -1,0 +1,10 @@
+*.zip
+*.csv
+*.txt
+*.log
+*.pdf
+*.docx
+*.doc
+.env
+__pycache__/
+
