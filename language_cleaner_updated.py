@@ -427,8 +427,9 @@ def _run_pass(paths: List[Path]):
     skipped_files = []
     
     for z in paths:
-        # ── If the path is a ZIP archive ───────────────────────────
-        if zipfile.is_zipfile(z):
+        # Treat as ZIP archive only if the file extension itself is .zip. DOCX/PPTX etc. are ZIP containers
+        # but should be processed as individual files, not archives.
+        if z.suffix.lower() == ".zip" and zipfile.is_zipfile(z):
             print(f"\n📁 Processing archive: {z.name}")
             with zipfile.ZipFile(z) as arc:
                 file_list = [m for m in arc.namelist() if not m.endswith('/') and "__macosx" not in m.lower()]
@@ -582,7 +583,8 @@ def process_archives(zips: List[Path]):
     print("\n🔍 Validation loop begins "
           f"(target pass rate: {CONFIDENCE_THRESHOLD:.0%}, max rounds: {MAX_ROUNDS})")
     flag_leaks, race_leaks = 0, 0
-    failures = []
+    failures: List[int] = []
+    resolved: List[int] = []  # ensure variable is defined regardless of later branches
     pass_rate = 0.0
     for round_num in range(1, MAX_ROUNDS + 1):
         failures, flag_leaks, race_leaks = [], 0, 0
@@ -660,7 +662,6 @@ def process_archives(zips: List[Path]):
 
     # ---------------- Second-pass auto-fix ----------------
     if failures:
-        resolved = []
         extra_fix_msg = (
             "SECOND ATTEMPT: The previous rewrite still contained flagged terms. "
             "Remove or replace ALL flagged words listed. Do NOT introduce words such as underserved, "
